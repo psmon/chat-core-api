@@ -1,5 +1,7 @@
 
+using ChatCoreAPI.Actors;
 using ChatCoreAPI.Hubs;
+using ChatCoreAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +11,13 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// creates instance of IPublicHashingService that can be accessed by ASP.NET
+builder.Services.AddSingleton<IActorBridge, AkkaService>();
+
+// starts the IHostedService, which creates the ActorSystem and actors
+builder.Services.AddHostedService<AkkaService>(sp => (AkkaService)sp.GetRequiredService<IActorBridge>());
+
 
 builder.Services.AddRazorPages();
 builder.Services.AddSignalR();
@@ -42,7 +51,7 @@ app.UseRouting();
 
 app.UseAuthorization();
 
-app.UseCors();
+//app.UseCors();
 app.MapRazorPages();
 app.MapHub<ChatHub>("/chatHub");
 
