@@ -7,8 +7,14 @@ namespace ChatCoreAPI.Actors
     {
         private readonly ILoggingAdapter log = Context.GetLogger();
 
-        public ChannelActor()
+        private string ChannelName { get; set; }
+
+        public ChannelActor(string channelName)
         {
+            log.Info("Create ChannelActor: {0}", channelName);
+
+            ChannelName = channelName;
+
             Receive<string>(message => {
                 log.Info("Received String message: {0}", message);
                 Sender.Tell(message);
@@ -16,9 +22,9 @@ namespace ChatCoreAPI.Actors
             
         }
 
-        public static Props Prop()
+        public static Props Prop(string channelName)
         {
-            return Akka.Actor.Props.Create(() => new ChannelActor());
+            return Akka.Actor.Props.Create(() => new ChannelActor(channelName));
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Akka.Actor;
 using Akka.DependencyInjection;
+using Akka.Dispatch.SysMsg;
 
 using ChatCoreAPI.Actors;
 
@@ -23,9 +24,7 @@ namespace ChatCoreAPI.Services
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-
             var bootstrap = BootstrapSetup.Create();
-
 
             // enable DI support inside this ActorSystem, if needed
             var diSetup = DependencyResolverSetup.Create(_serviceProvider);
@@ -36,7 +35,9 @@ namespace ChatCoreAPI.Services
             // start ActorSystem
             _actorSystem = ActorSystem.Create("akka-universe", actorSystemSetup);
 
-            _actorRef = _actorSystem.ActorOf(ChannelActor.Prop(), "heavy-weight-word");
+            _actorRef = _actorSystem.ActorOf(ChannelManagerActor.Prop(), "ChannelManagerActor");
+
+            ActorTest();
 
             // add a continuation task that will guarantee shutdown of application if ActorSystem terminates
             //await _actorSystem.WhenTerminated.ContinueWith(tr => {
@@ -46,6 +47,12 @@ namespace ChatCoreAPI.Services
                 _applicationLifetime.StopApplication();
             });
             await Task.CompletedTask;
+        }
+
+        public void ActorTest()
+        {
+            _actorRef.Tell(new CreateChannel() { ChannelName = "webnori" });
+
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)
