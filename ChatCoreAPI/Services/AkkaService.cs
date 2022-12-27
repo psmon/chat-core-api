@@ -71,5 +71,10 @@ namespace ChatCoreAPI.Services
         {
             return await _actorRef.Ask<T>(message);
         }
+
+        public ActorSystem GetActorSystem()
+        {
+            return _actorSystem;
+        }
     }
 }
