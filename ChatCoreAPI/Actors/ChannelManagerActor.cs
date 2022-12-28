@@ -25,25 +25,28 @@ namespace ChatCoreAPI.Actors
             });
 
             Receive<ChannelInfo>(message => {
-                log.Info("Received ChannelInfo message: {0}", message);
-                var channelActor = Context.Child(message.ChannelId);
-
-                if (channelActor != null)
+                try
                 {
-                    ChannelInfo channelInfo = new ChannelInfo()
+                    log.Info("Received ChannelInfo message: {0}", message);
+                    var channelActor = Context.ActorSelection(message.ChannelId).ResolveOne(TimeSpan.FromSeconds(1)).Result;
+                    if (channelActor != null)
                     {
-                        ChannelName = message.ChannelName,
-                        ChannelId = message.ChannelId,
-                        ChannelActor = channelActor
-                    };
-                    Sender.Tell(message);
+                        ChannelInfo channelInfo = new ChannelInfo()
+                        {
+                            ChannelName = message.ChannelName,
+                            ChannelId = message.ChannelId,
+                            ChannelActor = channelActor
+                        };
+                        Sender.Tell(channelInfo);
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    Sender.Tell(new ErrorEvent() { ErrorCode= -1, ErrorMessage= "채널을 찾을수 없습니다." });
+                    log.Error(ex.Message);
+
+                    Sender.Tell(new ErrorEventMessage() { ErrorCode = -1, ErrorMessage = $"{message.ChannelId} 채널을 찾을수 없습니다." });
                 }
             });
-
             //
 
         }

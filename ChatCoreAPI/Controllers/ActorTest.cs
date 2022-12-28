@@ -8,9 +8,13 @@ namespace ChatCoreAPI.Controllers
     {
         private IActorBridge _actorBridge;
 
-        public ActorTest(IActorBridge actorBridge)
+        private IServiceScopeFactory _serviceScopeFactory;
+
+        public ActorTest(IActorBridge actorBridge, IServiceScopeFactory serviceScopeFactory)
         {
             _actorBridge = actorBridge;
+
+            _serviceScopeFactory = serviceScopeFactory;
         }
 
         [HttpGet(Name = "ActorTest")]
@@ -22,7 +26,7 @@ namespace ChatCoreAPI.Controllers
             {
                 case 0:
                 {
-                     _actorBridge.GetActorSystem().ActorOf(UserActor.Prop(connectionId));
+                     _actorBridge.GetActorSystem().ActorOf(UserActor.Prop(connectionId, _serviceScopeFactory));
                 };
                 break;
             }

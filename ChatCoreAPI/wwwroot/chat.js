@@ -16,15 +16,31 @@ document.addEventListener("DOMContentLoaded", () => {
         li.textContent = `${user}: ${message}`;
         document.getElementById("messageList").appendChild(li);
     });
+
+
+    connection.on("OnJoinChannel", (channelId, channelName) => {
+        const li = document.createElement("li");
+        li.textContent = `OnJoinChannel ${channelId}: ${channelName}`;
+        document.getElementById("messageList").appendChild(li);
+    });
+
+    connection.on("OnErrorMessage", (errorCode, errMessage) => {
+        const li = document.createElement("li");
+        li.textContent = `OnErrorMessage ${errorCode}: ${errMessage}`;
+        document.getElementById("messageList").appendChild(li);
+    });
+
     // </snippet_ReceiveMessage>
 
     document.getElementById("send").addEventListener("click", async () => {
-        const user = document.getElementById("userInput").value;
-        const message = document.getElementById("messageInput").value;
+        const actionInput = document.getElementById("actionInput").value;
+        const input1 = document.getElementById("input1").value;
+        const input2 = document.getElementById("input2").value;
+        const input3 = document.getElementById("input3").value;
 
         // <snippet_Invoke>
         try {
-            await connection.invoke("SendMessage", user, message);
+            await connection.invoke(actionInput, input1, input2, input3);
         } catch (err) {
             console.error(err);
         }

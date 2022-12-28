@@ -11,11 +11,14 @@ namespace ChatCoreAPI.Hubs
     {
         private IActorBridge _actorBridge { get; set; }
 
-        private IActorRef _userActor { get; set; }
+        private IServiceScopeFactory _serviceScopeFactory;
 
-        public ChatHub(IActorBridge actorBridge)
+        //private IActorRef _userActor { get; set; }
+
+        public ChatHub(IActorBridge actorBridge, IServiceScopeFactory serviceScopeFactory)
         {
             _actorBridge = actorBridge;
+            _serviceScopeFactory = serviceScopeFactory;
         }
 
         public async Task SendMessage(string user, string message)
@@ -29,24 +32,33 @@ namespace ChatCoreAPI.Hubs
             {
                 ChannelId = channelId,
                 AccessToken = accessToken,
-                LoginId = loginId
+                LoginId = loginId,
+                ChannelManagerActor = _actorBridge.GetActorManager()
             };
 
+            IActorRef _userActor = await GetUserActor();
             _userActor.Tell(joinChannel);
         }
 
         public override async Task OnConnectedAsync()
         {            
-            _userActor = _actorBridge.GetActorSystem().ActorOf(UserActor.Prop(Context.ConnectionId));
+            _actorBridge.GetActorSystem().ActorOf(UserActor.Prop(Context.ConnectionId, _serviceScopeFactory), Context.ConnectionId);
 
             await base.OnConnectedAsync();
         }
 
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
+            IActorRef _userActor = await GetUserActor();
             _userActor.Tell(PoisonPill.Instance);
 
             await base.OnDisconnectedAsync(exception);
+        }
+
+        protected async Task<IActorRef> GetUserActor()
+        {
+            return await _actorBridge.GetActorSystem().ActorSelection($"user/{Context.ConnectionId}")
+                .ResolveOne(TimeSpan.FromSeconds(3));
         }
 
 

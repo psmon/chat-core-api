@@ -22,14 +22,16 @@ namespace ChatCoreAPI.Actors
             });
 
             Receive<JoinChannel>(message => {
+
+                log.Info("Received String message: {0}", message);
+
                 if (message.ChannelId == ChannelInfo.ChannelId)
-                {
-                    log.Info("Received String message: {0}", message);                    
+                {                    
                     Sender.Tell(ChannelInfo);
                 }
                 else
                 {
-                    Sender.Tell(new ErrorEvent() { ErrorCode = -401,ErrorMessage = "로그인Error" });
+                    Sender.Tell(new ErrorEventMessage() { ErrorCode = -401,ErrorMessage = "로그인Error" });
                 }
             });
 

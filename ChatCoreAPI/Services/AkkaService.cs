@@ -51,7 +51,7 @@ namespace ChatCoreAPI.Services
 
         public void ActorTest()
         {
-            _actorRef.Tell(new CreateChannel() { ChannelName = "webnori" });
+            _actorRef.Tell(new CreateChannel() { ChannelName = "웹노리", ChannelId = "webnori" });
 
         }
 
@@ -75,6 +75,11 @@ namespace ChatCoreAPI.Services
         public ActorSystem GetActorSystem()
         {
             return _actorSystem;
+        }
+
+        public IActorRef GetActorManager()
+        {
+            return _actorRef;
         }
     }
 }

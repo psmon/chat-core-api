@@ -51,7 +51,7 @@ namespace ChatCoreAPI.Actors
         public string LoginId { get; set; }
     }
 
-    public class ErrorEvent
+    public class ErrorEventMessage
     {
         public int ErrorCode {get; set; }
 
