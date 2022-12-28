@@ -1,6 +1,7 @@
 ﻿using Akka.Actor;
 
 using ChatCoreAPI.Actors;
+using ChatCoreAPI.Actors.Models;
 
 using Microsoft.AspNetCore.SignalR;
 
@@ -22,9 +23,16 @@ namespace ChatCoreAPI.Hubs
             await Clients.All.SendAsync("ReceiveMessage", user, message);
         }
 
-        public async Task JoinChannel(string channel, string id, string pw) 
+        public async Task JoinChannel(string channelId, string loginId, string accessToken) 
         {
+            JoinChannel joinChannel = new JoinChannel()
+            {
+                ChannelId = channelId,
+                AccessToken = accessToken,
+                LoginId = loginId
+            };
 
+            _userActor.Tell(joinChannel);
         }
 
         public override async Task OnConnectedAsync()

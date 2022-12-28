@@ -1,5 +1,7 @@
 ﻿using System.Text.Json;
 
+using Akka.Actor;
+
 namespace ChatCoreAPI.Actors
 {
     public class ChannelCmd
@@ -11,20 +13,50 @@ namespace ChatCoreAPI.Actors
             EventId = Guid.NewGuid().ToString();
         }
 
-        public override string ToString() 
-        {
-            return JsonSerializer.Serialize(this);
-        }
-    }
-
-    public class CreateChannel : ChannelCmd
-    {
-        public string ChannelName { get; set; }
-
         public override string ToString()
         {
             return JsonSerializer.Serialize(this);
         }
     }
+
+    public class ChannelInfo : ChannelCmd
+    {
+        public string ChannelName { get; set; }
+
+        public string ChannelId { get; set; }
+
+        public IActorRef ChannelActor;
+    }
+
+    public class CreateChannel : ChannelInfo
+    {
+        public override string ToString()
+        {
+            return JsonSerializer.Serialize(this);
+        }
+    }
+
+
+    public class ContainActorInfo
+    {
+        public IActorRef ChannelManagerActor;
+    }
+
+    public class JoinChannel : ContainActorInfo
+    {
+        public string ChannelId { get; set; }
+
+        public string AccessToken { get; set; }
+
+        public string LoginId { get; set; }
+    }
+
+    public class ErrorEvent
+    {
+        public int ErrorCode {get; set; }
+
+        public string ErrorMessage {get; set; }
+    }
+        
 
 }
