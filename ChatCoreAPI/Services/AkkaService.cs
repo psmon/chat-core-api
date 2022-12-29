@@ -81,5 +81,22 @@ namespace ChatCoreAPI.Services
         {
             return _actorRef;
         }
+
+        public IActorRef GetChannelActor(string channelId)
+        {
+            var result = _actorRef.Ask(new ChannelInfo()
+            {
+                ChannelId = channelId
+            }).Result;
+
+            if (result is ChannelInfo)
+            {
+                ChannelInfo channelInfo = result as ChannelInfo;
+                var _channelActor = channelInfo.ChannelActor;
+                return _channelActor;
+            }
+
+            return null;
+        }
     }
 }

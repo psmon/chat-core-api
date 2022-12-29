@@ -1,9 +1,13 @@
-﻿using ChatCoreAPI.Actors;
+﻿using Akka.Actor;
+
+using ChatCoreAPI.Actors;
 
 using Microsoft.AspNetCore.Mvc;
 
 namespace ChatCoreAPI.Controllers
 {
+    [ApiController]
+    [Route("[controller]")]
     public class ActorTest : ControllerBase
     {
         private IActorBridge _actorBridge;
@@ -18,17 +22,18 @@ namespace ChatCoreAPI.Controllers
         }
 
         [HttpGet(Name = "ActorTest")]
-        public string Get(int testStep,string connectionId)
+        public async Task<string> Get(int testStep,string connectionId)
         {
             string testResult = "";
 
             switch (testStep)
             {
                 case 0:
-                {
                      _actorBridge.GetActorSystem().ActorOf(UserActor.Prop(connectionId, _serviceScopeFactory));
-                };
                 break;
+                case 1:
+                    _actorBridge.GetChannelActor("webnori").Tell("AutoAssignTest");
+                break;                
             }
 
             return testResult;

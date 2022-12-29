@@ -34,6 +34,16 @@ namespace ChatCoreAPI.Actors
                 log.Info("Received String message: {0}", message);
                 Sender.Tell(message);
             });
+            
+            Receive<AutoAssign>(message => {
+                log.Info("Received AutoAssign message: {0}", message.RoomSession);
+                SendToConectionId(new WSSendEvent() { 
+                    EventType = "AutoAssign",
+                    ChannelId = ChannelId,
+                    ChannelName = "",
+                    EventData = "test"
+                });
+            });
 
             Receive<JoinChannel>(message => {
                 log.Info("Received String message: {0}", message);
@@ -142,6 +152,11 @@ namespace ChatCoreAPI.Actors
 
         protected override void PostStop()
         {
+            if (IsJoinGroup)
+            {
+                _channelActor.Tell(new LeaveChannel() { ChannelId = ChannelId, ConnectionId = ConnectionId });
+            }
+
             log.Info("Stop UserActor: {0}", ConnectionId);
             base.PostStop();
         }

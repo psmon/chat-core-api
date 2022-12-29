@@ -9,6 +9,8 @@ namespace ChatCoreAPI.Actors
 
         IActorRef GetActorManager();
 
+        IActorRef GetChannelActor(string channelId);
+
         ActorSystem GetActorSystem();
     }
 }

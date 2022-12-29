@@ -52,9 +52,20 @@ namespace ChatCoreAPI.Actors
     }
 
     public class NotyJoinChannel : JoinChannel
-    {
+    {        
     }
 
+    public class LeaveChannel
+    {
+        public string ChannelId { get; set; }
+
+        public string ConnectionId { get; set; }
+    }
+
+    public class AutoAssign
+    {
+        public string RoomSession { get; set; }
+    }
 
     public class ErrorEventMessage
     {
