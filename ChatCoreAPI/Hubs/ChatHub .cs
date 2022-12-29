@@ -30,6 +30,7 @@ namespace ChatCoreAPI.Hubs
         {
             JoinChannel joinChannel = new JoinChannel()
             {
+                ConnectionId = Context.ConnectionId,
                 ChannelId = channelId,
                 AccessToken = accessToken,
                 LoginId = loginId,

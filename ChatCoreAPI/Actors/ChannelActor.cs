@@ -1,5 +1,9 @@
-﻿using Akka.Actor;
+﻿using System.Threading.Channels;
+
+using Akka.Actor;
 using Akka.Event;
+
+using ChatCoreAPI.Actors.Models;
 
 using RoundRobin;
 
@@ -12,6 +16,8 @@ namespace ChatCoreAPI.Actors
         private ChannelInfo ChannelInfo { get; set; }
 
         private List<IActorRef> ActorRefs = new List<IActorRef>();
+
+        private Dictionary<string, IActorRef> ActorsByConncteID = new Dictionary<string, IActorRef>();
 
         private RoundRobinList<IActorRef> Router;
 
@@ -36,12 +42,26 @@ namespace ChatCoreAPI.Actors
                 }
             });
 
+            Receive<SendAllGroup>(message => {
+                log.Info("Received String message: {0}", message);
+                foreach (var userActor in ActorRefs)
+                {
+                    userActor.Tell(message);
+                }
+            });
+
+            Receive<SendSomeOne>(message => {
+                log.Info("Received String message: {0}", message);
+                ActorRefs[0].Tell(message);
+            });
+
             Receive<JoinChannel>(message => {
                 log.Info("Received String message: {0}", message);
                 if (message.ChannelId == ChannelInfo.ChannelId)
                 {                    
                     Sender.Tell(ChannelInfo);
                     ActorRefs.Add(Sender);
+                    ActorsByConncteID[message.ConnectionId] = Sender;
                     Router = new RoundRobinList<IActorRef>(ActorRefs);
 
                 }
@@ -54,6 +74,7 @@ namespace ChatCoreAPI.Actors
             Receive<LeaveChannel>(message => {
                 log.Info("Received LeaveChannel message: {0} {1}", message.ChannelId, message.ConnectionId);
                 ActorRefs.Remove(Sender);
+                ActorsByConncteID.Remove(message.ConnectionId);
                 Router = new RoundRobinList<IActorRef>(ActorRefs);
             });
 
@@ -74,6 +95,12 @@ namespace ChatCoreAPI.Actors
             {
                 return null;
             }
+        }
+
+        protected override void PostStop()
+        {
+            log.Info("Stop ChannelActor: {0}", ChannelInfo.ChannelId);
+            base.PostStop();
         }
     }
 }

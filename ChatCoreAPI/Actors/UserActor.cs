@@ -34,10 +34,38 @@ namespace ChatCoreAPI.Actors
                 log.Info("Received String message: {0}", message);
                 Sender.Tell(message);
             });
-            
-            Receive<AutoAssign>(message => {
+
+            ReceiveAsync<SendAllGroup>(async message => {
+                log.Info("Received String message: {0}", message);
+                await SendToSelfConnection(new WSSendEvent()
+                {
+                    EventType = message.EventType,
+                    ChannelId = message.ChannelId,
+                    ChannelName = message.ChannelName,
+                    EventData = message.EventData
+                });
+            });
+
+            ReceiveAsync<SendSomeOne>(async message => {
+                log.Info("Received String message: {0}", message);
+                await SendToConnectionId(message.ConnectId, new WSSendEvent()
+                {
+                    EventType = message.EventType,
+                    ChannelId = message.ChannelId,
+                    ChannelName = message.ChannelName,
+                    EventData = message.EventData
+                });
+            });
+
+            Receive<string>(message => {
+                log.Info("Received String message: {0}", message);
+                Sender.Tell(message);
+            });
+
+
+            ReceiveAsync<AutoAssign>(async message => {
                 log.Info("Received AutoAssign message: {0}", message.RoomSession);
-                SendToConectionId(new WSSendEvent() { 
+                await SendToSelfConnection(new WSSendEvent() { 
                     EventType = "AutoAssign",
                     ChannelId = ChannelId,
                     ChannelName = "",
@@ -79,12 +107,12 @@ namespace ChatCoreAPI.Actors
 
         public async Task OnJoinChannel(ChannelInfo channelInfo)
         {
-            await SendToConectionId(new WSSendEvent()
+            await SendToSelfConnection(new WSSendEvent()
             {
                 EventType = "OnJoinChannel",
                 ChannelId = channelInfo.ChannelId,
                 ChannelName = channelInfo.ChannelName,
-                EventData = String.Empty
+                EventData = $"connectId:{ConnectionId}"
             });
 
             ChannelId = channelInfo.ChannelId;
@@ -102,7 +130,7 @@ namespace ChatCoreAPI.Actors
 
         }
 
-        public async Task SendToConectionId(WSSendEvent wSSendEvent)
+        public async Task SendToSelfConnection(WSSendEvent wSSendEvent)
         {
             using (var scope = _scopeFactory.CreateScope())
             {
@@ -110,6 +138,17 @@ namespace ChatCoreAPI.Actors
 
                 await wsHub.Clients.Client(ConnectionId).SendAsync("ReceiveMessage",
                     wSSendEvent.EventType, wSSendEvent.ChannelId, wSSendEvent.ChannelName, wSSendEvent.EventData );
+            }
+        }
+
+        public async Task SendToConnectionId(string connectionId, WSSendEvent wSSendEvent)
+        {
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                var wsHub = scope.ServiceProvider.GetRequiredService<IHubContext<ChatHub>>();
+
+                await wsHub.Clients.Client(connectionId).SendAsync("ReceiveMessage",
+                    wSSendEvent.EventType, wSSendEvent.ChannelId, wSSendEvent.ChannelName, wSSendEvent.EventData);
             }
         }
 

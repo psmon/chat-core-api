@@ -18,4 +18,14 @@ namespace ChatCoreAPI.Actors.Models
 
     }
 
+    public class SendAllGroup : WSSendEvent 
+    { 
+    }
+
+    public class SendSomeOne : WSSendEvent
+    {
+        public string ConnectId { get; set; }
+    }
+
+
 }

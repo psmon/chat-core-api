@@ -8,6 +8,8 @@ namespace ChatCoreAPI.Actors
     {
         public string EventId { get; set; }
 
+        public string ConnectionId { get; set; }
+
         public IActorRef Target { get; set; }
 
         public IActorRef ChannelManagerActor { get; set; }
@@ -41,6 +43,11 @@ namespace ChatCoreAPI.Actors
         }
     }
 
+    public class DeleteChannel : ChannelInfo
+    {
+    }
+
+
     public class JoinChannel : ChannelCmd
     {
         public string ChannelId { get; set; }
@@ -57,8 +64,7 @@ namespace ChatCoreAPI.Actors
     public class LeaveChannel : ChannelCmd
     {
         public string ChannelId { get; set; }
-
-        public string ConnectionId { get; set; }
+        
     }
 
     public class AutoAssign : ChannelCmd

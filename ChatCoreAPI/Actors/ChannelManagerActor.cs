@@ -18,10 +18,38 @@ namespace ChatCoreAPI.Actors
             });
 
             Receive<CreateChannel>(message => {
-                log.Info("Received CreateChannel message: {0}", message);
-                               
-                Context.ActorOf(ChannelActor.Prop(message), message.ChannelId);
-                //Sender.Tell(message);
+                try
+                {
+                    log.Info("Received CreateChannel message: {0}", message);
+                    Context.ActorOf(ChannelActor.Prop(message), message.ChannelId);
+                    Sender.Tell("ok");
+                }
+                catch (Exception ex)
+                {
+                    Sender.Tell(new ErrorEventMessage()
+                    {
+                        ErrorCode = -1,
+                        ErrorMessage = $"{message.ChannelId} 채널생성실패 - {ex.Message}"
+                    });
+                }
+            });
+
+            Receive<DeleteChannel>(message => {
+                try
+                {
+                    log.Info("Received DeleteChannel message: {0}", message);
+                    var channelActor = Context.ActorSelection(message.ChannelId).ResolveOne(TimeSpan.FromSeconds(1)).Result;
+                    channelActor.Tell(PoisonPill.Instance);
+                    Sender.Tell("ok");
+                }
+                catch (Exception ex)
+                {
+                    Sender.Tell(new ErrorEventMessage()
+                    {
+                        ErrorCode = -1,
+                        ErrorMessage = $"{message.ChannelId} 채널삭제실패 - {ex.Message}"
+                    });
+                }
             });
 
             Receive<ChannelInfo>(message => {
