@@ -24,10 +24,10 @@ namespace ChatCoreAPI.Controllers
         }
 
         [HttpPut("AutoAssign")]        
-        public async Task<string> AutoAssign()
+        public async Task<string> AutoAssign(string channelId)
         {
             string testResult = "OK";
-            _actorBridge.GetChannelActor("webnori").Tell("AutoAssignTest");
+            _actorBridge.GetChannelActor(channelId).Tell("AutoAssignTest");
             return testResult;
         }
 
