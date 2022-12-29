@@ -41,13 +41,15 @@ namespace ChatCoreAPI.Actors
                     }
                 }
                 catch (Exception ex)
-                {
+                {                    
                     log.Error(ex.Message);
 
-                    Sender.Tell(new ErrorEventMessage() { ErrorCode = -1, ErrorMessage = $"{message.ChannelId} 채널을 찾을수 없습니다." });
+                    Sender.Tell(new ErrorEventMessage() { 
+                        ErrorCode = -1,
+                        ErrorMessage = $"{message.ChannelId} 채널을 찾을수 없습니다."                        
+                    });
                 }
             });
-            //
 
         }
 

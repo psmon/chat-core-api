@@ -8,6 +8,10 @@ namespace ChatCoreAPI.Actors
     {
         public string EventId { get; set; }
 
+        public IActorRef Target { get; set; }
+
+        public IActorRef ChannelManagerActor { get; set; }
+
         public ChannelCmd()
         {
             EventId = Guid.NewGuid().ToString();
@@ -26,6 +30,7 @@ namespace ChatCoreAPI.Actors
         public string ChannelId { get; set; }
 
         public IActorRef ChannelActor;
+        
     }
 
     public class CreateChannel : ChannelInfo
@@ -36,13 +41,7 @@ namespace ChatCoreAPI.Actors
         }
     }
 
-
-    public class ContainActorInfo
-    {
-        public IActorRef ChannelManagerActor;
-    }
-
-    public class JoinChannel : ContainActorInfo
+    public class JoinChannel : ChannelCmd
     {
         public string ChannelId { get; set; }
 
@@ -55,23 +54,24 @@ namespace ChatCoreAPI.Actors
     {        
     }
 
-    public class LeaveChannel
+    public class LeaveChannel : ChannelCmd
     {
         public string ChannelId { get; set; }
 
         public string ConnectionId { get; set; }
     }
 
-    public class AutoAssign
+    public class AutoAssign : ChannelCmd
     {
         public string RoomSession { get; set; }
     }
 
-    public class ErrorEventMessage
+    public class ErrorEventMessage : ChannelCmd
     {
         public int ErrorCode {get; set; }
 
         public string ErrorMessage {get; set; }
+
     }
         
 

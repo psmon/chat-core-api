@@ -49,7 +49,7 @@ namespace ChatCoreAPI.Actors
                 log.Info("Received String message: {0}", message);
 
                 var result = message.ChannelManagerActor.Ask(new ChannelInfo() { 
-                    ChannelId = message.ChannelId                    
+                    ChannelId = message.ChannelId
                 }).Result;
 
                 if (result is ChannelInfo)
@@ -58,6 +58,9 @@ namespace ChatCoreAPI.Actors
                     _channelActor = channelInfo.ChannelActor;
 
                     _channelActor.Tell(message);
+                } 
+                else if (result is ErrorEventMessage) {
+                    Self.Tell(result);
                 }
             });
 
@@ -132,8 +135,6 @@ namespace ChatCoreAPI.Actors
                 await wsHub.Groups.AddToGroupAsync(ConnectionId, groupName);
             }
         }
-
-
 
         public async Task OnErrorMessage(ErrorEventMessage errorEvent)
         {

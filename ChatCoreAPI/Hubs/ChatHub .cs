@@ -33,7 +33,7 @@ namespace ChatCoreAPI.Hubs
                 ChannelId = channelId,
                 AccessToken = accessToken,
                 LoginId = loginId,
-                ChannelManagerActor = _actorBridge.GetActorManager()
+                ChannelManagerActor = _actorBridge.GetActorManager()                
             };
 
             IActorRef _userActor = await GetUserActor();
@@ -49,10 +49,16 @@ namespace ChatCoreAPI.Hubs
 
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
-            IActorRef _userActor = await GetUserActor();
-            _userActor.Tell(PoisonPill.Instance);
-
-            await base.OnDisconnectedAsync(exception);
+            try
+            {
+                IActorRef _userActor = await GetUserActor();
+                _userActor.Tell(PoisonPill.Instance);
+            }
+            finally
+            {
+                Console.WriteLine($"OnDisconnectedAsync {Context.ConnectionId}");
+                await base.OnDisconnectedAsync(exception);
+            }
         }
 
         protected async Task<IActorRef> GetUserActor()
