@@ -6,7 +6,7 @@ using ChatCoreAPI.Actors.Models;
 using Microsoft.AspNetCore.SignalR;
 
 namespace ChatCoreAPI.Hubs
-{
+{    
     public class ChatHub : Hub
     {
         private IActorBridge _actorBridge { get; set; }

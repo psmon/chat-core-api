@@ -10,27 +10,23 @@ document.addEventListener("DOMContentLoaded", () => {
         .build();
     // </snippet_Connection>
 
-    // <snippet_ReceiveMessage>
-    connection.on("ReceiveMessage", (user, message) => {
+    // <snippet_ReceiveMessage>    
+    connection.on("ReceiveMessage", (actionType, channelId, channelName, eventData) => {
         const li = document.createElement("li");
-        li.textContent = `${user}: ${message}`;
+        li.textContent = `OnRecvMessage ${actionType} : ${channelId} ${channelName} ${eventData}`;
         document.getElementById("messageList").appendChild(li);
     });
+    // </snippet_ReceiveMessage>
 
-
-    connection.on("OnJoinChannel", (channelId, channelName) => {
-        const li = document.createElement("li");
-        li.textContent = `OnJoinChannel ${channelId}: ${channelName}`;
-        document.getElementById("messageList").appendChild(li);
-    });
-
-    connection.on("OnErrorMessage", (errorCode, errMessage) => {
+    // <snippet_ErrorMessage>
+    connection.on("ErrorMessage", (errorCode, errMessage) => {
         const li = document.createElement("li");
         li.textContent = `OnErrorMessage ${errorCode}: ${errMessage}`;
         document.getElementById("messageList").appendChild(li);
     });
+    // </snippet_ErrorMessage>
 
-    // </snippet_ReceiveMessage>
+    
 
     document.getElementById("send").addEventListener("click", async () => {
         const actionInput = document.getElementById("actionInput").value;

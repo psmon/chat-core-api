@@ -51,6 +51,11 @@ namespace ChatCoreAPI.Actors
         public string LoginId { get; set; }
     }
 
+    public class NotyJoinChannel : JoinChannel
+    {
+    }
+
+
     public class ErrorEventMessage
     {
         public int ErrorCode {get; set; }

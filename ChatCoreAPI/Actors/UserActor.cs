@@ -18,6 +18,10 @@ namespace ChatCoreAPI.Actors
 
         private string ConnectionId { get; set; }
 
+        private string ChannelId { get; set; }
+
+        public bool IsJoinGroup { get; set; }
+
         public UserActor(string connectionId, IServiceScopeFactory scopeFactory)
         {
             log.Info("Create UserActor: {0}", connectionId);
@@ -62,19 +66,71 @@ namespace ChatCoreAPI.Actors
 
         public async Task OnJoinChannel(ChannelInfo channelInfo)
         {
+            await SendToConectionId(new WSSendEvent()
+            {
+                EventType = "OnJoinChannel",
+                ChannelId = channelInfo.ChannelId,
+                ChannelName = channelInfo.ChannelName,
+                EventData = String.Empty
+            });
+
+            ChannelId = channelInfo.ChannelId;
+            IsJoinGroup = true;
+
+            await JoinGroup(channelInfo.ChannelId);
+
+            await SendToGroup(new WSSendEvent()
+            {
+                EventType = "OnJoinChannel-GroupNoti",
+                ChannelId = channelInfo.ChannelId,
+                ChannelName = channelInfo.ChannelName,
+                EventData = String.Empty
+            });
+
+        }
+
+        public async Task SendToConectionId(WSSendEvent wSSendEvent)
+        {
             using (var scope = _scopeFactory.CreateScope())
             {
                 var wsHub = scope.ServiceProvider.GetRequiredService<IHubContext<ChatHub>>();
-                await wsHub.Clients.Client(ConnectionId).SendAsync("OnJoinChannel", channelInfo.ChannelId, channelInfo.ChannelName);
+
+                await wsHub.Clients.Client(ConnectionId).SendAsync("ReceiveMessage",
+                    wSSendEvent.EventType, wSSendEvent.ChannelId, wSSendEvent.ChannelName, wSSendEvent.EventData );
             }
         }
+
+        public async Task SendToGroup(WSSendEvent wSSendEvent)
+        {
+            if (!IsJoinGroup)
+                return;
+
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                var wsHub = scope.ServiceProvider.GetRequiredService<IHubContext<ChatHub>>();
+
+                await wsHub.Clients.Group(ChannelId).SendAsync("ReceiveMessage",
+                    wSSendEvent.EventType, wSSendEvent.ChannelId, wSSendEvent.ChannelName, wSSendEvent.EventData);
+            }
+        }
+
+        public async Task JoinGroup(string groupName)
+        {
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                var wsHub = scope.ServiceProvider.GetRequiredService<IHubContext<ChatHub>>();
+                await wsHub.Groups.AddToGroupAsync(ConnectionId, groupName);
+            }
+        }
+
+
 
         public async Task OnErrorMessage(ErrorEventMessage errorEvent)
         {
             using (var scope = _scopeFactory.CreateScope())
             {
                 var wsHub = scope.ServiceProvider.GetRequiredService<IHubContext<ChatHub>>();
-                await wsHub.Clients.Client(ConnectionId).SendAsync("OnErrorMessage", errorEvent.ErrorCode, errorEvent.ErrorMessage);
+                await wsHub.Clients.Client(ConnectionId).SendAsync("ErrorMessage", errorEvent.ErrorCode, errorEvent.ErrorMessage);
             }
         }
 
