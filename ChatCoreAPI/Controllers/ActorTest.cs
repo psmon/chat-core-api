@@ -1,4 +1,6 @@
-﻿using Akka.Actor;
+﻿using System.Runtime.CompilerServices;
+
+using Akka.Actor;
 
 using ChatCoreAPI.Actors;
 
@@ -21,21 +23,19 @@ namespace ChatCoreAPI.Controllers
             _serviceScopeFactory = serviceScopeFactory;
         }
 
-        [HttpGet(Name = "ActorTest")]
-        public async Task<string> Get(int testStep,string connectionId)
+        [HttpPut("AutoAssign")]        
+        public async Task<string> AutoAssign()
+        {
+            string testResult = "OK";
+            _actorBridge.GetChannelActor("webnori").Tell("AutoAssignTest");
+            return testResult;
+        }
+
+        [HttpPost("CreateUserActor")] 
+        public async Task<string> CreateUserActor(string connectionId)
         {
             string testResult = "";
-
-            switch (testStep)
-            {
-                case 0:
-                     _actorBridge.GetActorSystem().ActorOf(UserActor.Prop(connectionId, _serviceScopeFactory));
-                break;
-                case 1:
-                    _actorBridge.GetChannelActor("webnori").Tell("AutoAssignTest");
-                break;                
-            }
-
+            _actorBridge.GetActorSystem().ActorOf(UserActor.Prop(connectionId, _serviceScopeFactory));
             return testResult;
         }
     }
