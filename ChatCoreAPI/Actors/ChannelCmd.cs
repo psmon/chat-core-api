@@ -21,7 +21,7 @@ namespace ChatCoreAPI.Actors
 
         public override string ToString()
         {
-            return JsonSerializer.Serialize(this);
+            return $"[{EventId}]::{ConnectionId}";
         }
     }
 
@@ -32,15 +32,17 @@ namespace ChatCoreAPI.Actors
         public string ChannelId { get; set; }
 
         public IActorRef ChannelActor;
-        
+
+        public override string ToString()
+        {
+            return $"[{EventId}]::{ConnectionId}::{ChannelId}::{ChannelId}";
+        }
+
     }
 
     public class CreateChannel : ChannelInfo
     {
-        public override string ToString()
-        {
-            return JsonSerializer.Serialize(this);
-        }
+
     }
 
     public class DeleteChannel : ChannelInfo
@@ -56,6 +58,7 @@ namespace ChatCoreAPI.Actors
 
         public string LoginId { get; set; }
     }
+
 
     public class NotyJoinChannel : JoinChannel
     {        

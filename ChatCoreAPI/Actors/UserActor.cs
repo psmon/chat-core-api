@@ -74,7 +74,17 @@ namespace ChatCoreAPI.Actors
             });
 
             Receive<JoinChannel>(message => {
-                log.Info("Received String message: {0}", message);
+                log.Info("Received JoinChannel message: {0}", message);
+
+                if (IsJoinGroup)
+                {
+                    Self.Tell(new ErrorEventMessage()
+                    {
+                        ErrorCode = -1,
+                        ErrorMessage = "하나의 채널에만 가입가능합니다. 채널을 변경하려면 LeaveChannel 을 이용해주세요"
+                    });
+                    return;
+                }                    
 
                 var result = message.ChannelManagerActor.Ask(new ChannelInfo() { 
                     ChannelId = message.ChannelId
@@ -91,6 +101,39 @@ namespace ChatCoreAPI.Actors
                     Self.Tell(result);
                 }
             });
+
+            //LeaveChannel
+            Receive<LeaveChannel>(message => {
+                log.Info("Received LeaveChannel message: {0}", message);
+
+                if (!IsJoinGroup)
+                {
+                    Self.Tell(new ErrorEventMessage()
+                    {
+                        ErrorCode = -1,
+                        ErrorMessage = "가입된 채널이 없습니다."
+                    });
+                    return;
+                };
+
+                var result = message.ChannelManagerActor.Ask(new ChannelInfo()
+                {
+                    ChannelId = message.ChannelId
+                }).Result;
+
+                if (result is ChannelInfo)
+                {
+                    ChannelInfo channelInfo = result as ChannelInfo;
+                    _channelActor = channelInfo.ChannelActor;
+
+                    _channelActor.Tell(message);
+                }
+                else if (result is ErrorEventMessage)
+                {
+                    Self.Tell(result);
+                }
+            });
+
 
             Receive<ChannelInfo>(async message => {
                 log.Info("Received ChannelInfo message: {0}", message);

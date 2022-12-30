@@ -5,8 +5,11 @@ using ChatCoreAPI.Actors.Models;
 
 using Microsoft.AspNetCore.SignalR;
 
+using SignalRSwaggerGen.Attributes;
+
 namespace ChatCoreAPI.Hubs
-{    
+{
+    [SignalRHub]
     public class ChatHub : Hub
     {
         private IActorBridge _actorBridge { get; set; }
@@ -40,6 +43,17 @@ namespace ChatCoreAPI.Hubs
             IActorRef _userActor = await GetUserActor();
             _userActor.Tell(joinChannel);
         }
+
+        public async Task LeaveChannel(string channelId, string loginId, string accessToken)
+        {
+            LeaveChannel leaveChannel = new LeaveChannel()
+            {
+                ChannelId = channelId,
+            };
+            IActorRef _userActor = await GetUserActor();
+            _userActor.Tell(leaveChannel);
+        }
+
 
         public override async Task OnConnectedAsync()
         {            
