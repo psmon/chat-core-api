@@ -7,6 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChatCoreAPI", "ChatCoreAPI\
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "솔루션 항목", "솔루션 항목", "{E5D86FB9-2EBC-4CE7-A208-0DDB1EF3B077}"
 	ProjectSection(SolutionItems) = preProject
+		code-review.md = code-review.md
 		readme.md = readme.md
 	EndProjectSection
 EndProject
