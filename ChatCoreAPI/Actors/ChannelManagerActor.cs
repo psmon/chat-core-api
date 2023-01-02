@@ -13,6 +13,8 @@ namespace ChatCoreAPI.Actors
 
         private readonly IServiceScopeFactory _scopeFactory;
 
+        IActorRef target = null;
+
 
         public ChannelManagerActor(IServiceScopeFactory scopeFactory)
         {
@@ -21,7 +23,12 @@ namespace ChatCoreAPI.Actors
             Receive<string>(message => {
                 log.Info("Received String message: {0}", message);
                 Sender.Tell(message);
-            });            
+            });
+
+            Receive<IActorRef>(actorRef => {
+                target = actorRef;
+                Sender.Tell("done");
+            });
 
             Receive<CreateChannel>(message => {
                 try
@@ -30,6 +37,10 @@ namespace ChatCoreAPI.Actors
                     Context.ActorOf(ChannelActor.Prop(message, _scopeFactory), message.ChannelId);
                     Sender.Tell("ok");
                     channels[message.ChannelId] = message as ChannelInfo;
+
+                    if (target != null)
+                        target.Forward("ok");
+
                 }
                 catch (Exception ex)
                 {

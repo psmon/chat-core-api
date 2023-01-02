@@ -99,6 +99,13 @@ namespace ChatCoreAPI.Actors
         public string ErrorMessage {get; set; }
 
     }
+
+    public class TestActor
+    {
+        public IActorRef actorRef { get; set; } 
+
+        public IActorRef target { get; set; }
+    }
         
 
 }

@@ -22,6 +22,10 @@ namespace ChatCoreAPI.Actors
 
         public bool IsJoinGroup { get; set; }
 
+        private IActorRef _testActor { get; set; }
+
+        IActorRef target = null;
+
         public UserActor(string connectionId, IServiceScopeFactory scopeFactory)
         {
             log.Info("Create UserActor: {0}", connectionId);
@@ -33,7 +37,13 @@ namespace ChatCoreAPI.Actors
             Receive<string>(message => {
                 log.Info("Received String message: {0}", message);
                 Sender.Tell(message);
-            });            
+            });
+
+            Receive<TestActor>(message => {
+                log.Info("Received TestActor message: {0}", message);
+                _testActor = message.actorRef;
+                target = message.target;
+            });
 
             ReceiveAsync<SendAllGroup>(async message => {
                 log.Info("Received String message: {0}", message);
@@ -123,8 +133,8 @@ namespace ChatCoreAPI.Actors
                 {
                     ChannelInfo channelInfo = result as ChannelInfo;
                     _channelActor = channelInfo.ChannelActor;
-
                     _channelActor.Tell(message);
+
                 } 
                 else if (result is ErrorEventMessage) {
                     Self.Tell(result);
@@ -167,7 +177,12 @@ namespace ChatCoreAPI.Actors
 
             Receive<ChannelInfo>(async message => {
                 log.Info("Received ChannelInfo message: {0}", message);
+
+                if (target != null)
+                    target.Forward(message);
+
                 await OnJoinChannel(message);
+
             });
 
             Receive<ErrorEventMessage>(async message => {
@@ -221,6 +236,12 @@ namespace ChatCoreAPI.Actors
 
         public async Task SendToSelfConnection(WSSendEvent wSSendEvent)
         {
+            if (_testActor != null)
+            {
+                _testActor.Tell(wSSendEvent);
+                return;
+            }
+
             using (var scope = _scopeFactory.CreateScope())
             {
                 var wsHub = scope.ServiceProvider.GetRequiredService<IHubContext<ChatHub>>();
@@ -232,6 +253,12 @@ namespace ChatCoreAPI.Actors
 
         public async Task SendToConnectionId(string connectionId, WSSendEvent wSSendEvent)
         {
+            if (_testActor != null)
+            {
+                _testActor.Tell(wSSendEvent);
+                return;
+            }
+
             using (var scope = _scopeFactory.CreateScope())
             {
                 var wsHub = scope.ServiceProvider.GetRequiredService<IHubContext<ChatHub>>();
@@ -245,6 +272,12 @@ namespace ChatCoreAPI.Actors
         {
             if (!IsJoinGroup)
                 return;
+
+            if (_testActor != null)
+            {
+                _testActor.Tell(wSSendEvent);
+                return;
+            }
 
             using (var scope = _scopeFactory.CreateScope())
             {
@@ -260,6 +293,12 @@ namespace ChatCoreAPI.Actors
             if (!IsJoinGroup)
                 return;
 
+            if (_testActor != null)
+            {
+                _testActor.Tell(wSSendEvent);
+                return;
+            }
+
             using (var scope = _scopeFactory.CreateScope())
             {
                 var wsHub = scope.ServiceProvider.GetRequiredService<IHubContext<ChatHub>>();
@@ -271,6 +310,12 @@ namespace ChatCoreAPI.Actors
 
         public async Task JoinGroup(string groupName)
         {
+            if (_testActor != null)
+            {
+                _testActor.Tell(new JoinGroup() { ConnectionId = ConnectionId, SubGorup = groupName });
+                return;
+            }
+
             using (var scope = _scopeFactory.CreateScope())
             {
                 var wsHub = scope.ServiceProvider.GetRequiredService<IHubContext<ChatHub>>();
@@ -280,6 +325,12 @@ namespace ChatCoreAPI.Actors
 
         public async Task OnErrorMessage(ErrorEventMessage errorEvent)
         {
+            if (_testActor != null)
+            {
+                _testActor.Tell(errorEvent);
+                return;
+            }
+
             using (var scope = _scopeFactory.CreateScope())
             {
                 var wsHub = scope.ServiceProvider.GetRequiredService<IHubContext<ChatHub>>();

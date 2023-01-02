@@ -1,11 +1,12 @@
 ﻿# ChatCore API ( SignalR with Akka.net)
 
 웹소켓(Signalr)이 액터와 연동되어 세션단위 채널관리가 되며 API를 통해 채널 푸시기능을 지원합니다.
-도메인에대한 기능은 가지고 있지않으며, 다음 기능을 커스텀하게 구현할수 있습니다.
+도메인에대한 기능은 가지고 있지않으며 여기서 제공하는 채널기능을 이용하여
+다음과 같은 다양한 서비스를 커스텀하게 구현할수 있습니다.
 
 - 다중채널지원 채팅솔루션
 - 다중채널지원 푸시 시스템
-
+- 채널내 라운드로빈 처리기능(채팅상담 분배)
 
 ![SignalRWithActor](doc/SignalRWithActor.png)
 
@@ -103,8 +104,53 @@ curl -X 'POST' \
 }'
 ```
 
+## Unit Test
 
 
+메시징처리에대한 유닛테스트를 지원합니다.
+
+```
+    public class ChannelTest : TestKit
+    {
+        IActorRef userActor;
+        TestProbe userActorTarget;
+        IActorRef channelManagerActor;
+        IActorRef websocket;
+        TestProbe channelManagerActorTarget;
+
+
+        public ChannelTest()
+        {
+            channelManagerActor = this.Sys.ActorOf(ChannelManagerActor.Prop(null));
+            channelManagerActorTarget = this.CreateTestProbe();
+            channelManagerActor.Tell(channelManagerActorTarget.Ref, this.TestActor);
+
+
+            userActor = this.Sys.ActorOf(UserActor.Prop("test1", null));            
+            websocket = this.Sys.ActorOf<WebSocketMockActor>();
+
+            userActorTarget = this.CreateTestProbe();
+            userActor.Tell(new ChatCoreAPI.Actors.TestActor() { actorRef = websocket, target = userActorTarget.Ref }, this.TestActor);
+            ExpectMsg("done", TimeSpan.FromSeconds(1));
+
+        }
+
+        [Fact]
+        public void JoinChannel()
+        {
+            channelManagerActor.Tell(new CreateChannel() { ChannelId="webnori", ChannelName="웹노리" });
+            channelManagerActorTarget.ExpectMsg("ok", TimeSpan.FromSeconds(1));
+
+            userActor.Tell(new JoinChannel() { 
+                ConnectionId = "test1",
+                ChannelId = "webnori",
+                ChannelManagerActor = channelManagerActor
+            });
+
+            userActorTarget.ExpectMsg<ChannelInfo>(TimeSpan.FromSeconds(1));
+        }
+    }
+```
 
 
 ## CodeReview
