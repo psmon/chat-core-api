@@ -11,8 +11,13 @@ namespace ChatCoreAPI.Actors
 
         private Dictionary<string,ChannelInfo> channels = new Dictionary<string,ChannelInfo>();
 
-        public ChannelManagerActor()
+        private readonly IServiceScopeFactory _scopeFactory;
+
+
+        public ChannelManagerActor(IServiceScopeFactory scopeFactory)
         {
+            _scopeFactory = scopeFactory;
+
             Receive<string>(message => {
                 log.Info("Received String message: {0}", message);
                 Sender.Tell(message);
@@ -22,7 +27,7 @@ namespace ChatCoreAPI.Actors
                 try
                 {
                     log.Info("Received CreateChannel message: {0}", message);
-                    Context.ActorOf(ChannelActor.Prop(message), message.ChannelId);
+                    Context.ActorOf(ChannelActor.Prop(message, _scopeFactory), message.ChannelId);
                     Sender.Tell("ok");
                     channels[message.ChannelId] = message as ChannelInfo;
                 }
@@ -102,9 +107,9 @@ namespace ChatCoreAPI.Actors
 
         }
 
-        public static Props Prop()
+        public static Props Prop( IServiceScopeFactory scopeFactory)
         {
-            return Akka.Actor.Props.Create(() => new ChannelManagerActor());
+            return Akka.Actor.Props.Create(() => new ChannelManagerActor(scopeFactory));
         }
     }
 }

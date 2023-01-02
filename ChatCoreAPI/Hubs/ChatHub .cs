@@ -44,6 +44,22 @@ namespace ChatCoreAPI.Hubs
             _userActor.Tell(joinChannel);
         }
 
+        public async Task JoinGroup(string channelId, string accessToken, string data)
+        {
+            JoinGroup joinGroup = new JoinGroup()
+            {
+                ConnectionId = Context.ConnectionId,
+                ChannelId = channelId,
+                AccessToken = accessToken,
+                LoginId = accessToken,
+                ChannelManagerActor = _actorBridge.GetActorManager(),
+                SubGorup = data
+            };
+
+            IActorRef _userActor = await GetUserActor();
+            _userActor.Tell(joinGroup);            
+        }
+
         public async Task LeaveChannel(string channelId, string accessToken, string data)
         {
             LeaveChannel leaveChannel = new LeaveChannel()

@@ -19,7 +19,8 @@ namespace ChatCoreAPI.Actors.Models
     }
 
     public class SendAllGroup : WSSendEvent 
-    { 
+    {
+        public string SubGroup { get; set; }
     }
 
     public class SendSomeOne : WSSendEvent

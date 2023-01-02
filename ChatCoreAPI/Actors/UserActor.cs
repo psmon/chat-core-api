@@ -33,17 +33,31 @@ namespace ChatCoreAPI.Actors
             Receive<string>(message => {
                 log.Info("Received String message: {0}", message);
                 Sender.Tell(message);
-            });
+            });            
 
             ReceiveAsync<SendAllGroup>(async message => {
                 log.Info("Received String message: {0}", message);
-                await SendToSelfConnection(new WSSendEvent()
+
+                if (!string.IsNullOrEmpty(message.SubGroup))
                 {
-                    EventType = message.EventType,
-                    ChannelId = message.ChannelId,
-                    ChannelName = message.ChannelName,
-                    EventData = message.EventData
-                });
+                    await SendToSubGroup(message.SubGroup, new WSSendEvent()
+                    {
+                        EventType = message.EventType,
+                        ChannelId = message.ChannelId,
+                        ChannelName = message.ChannelName,
+                        EventData = message.EventData
+                    });                
+                }
+                else
+                {
+                    await SendToSelfConnection(new WSSendEvent()
+                    {
+                        EventType = message.EventType,
+                        ChannelId = message.ChannelId,
+                        ChannelName = message.ChannelName,
+                        EventData = message.EventData
+                    });
+                }
             });
 
             ReceiveAsync<SendSomeOne>(async message => {
@@ -71,6 +85,21 @@ namespace ChatCoreAPI.Actors
                     ChannelName = "",
                     EventData = message.AsignData
                 });
+            });
+
+            ReceiveAsync<JoinGroup>(async message => {
+                if (!IsJoinGroup)
+                {
+                    Self.Tell(new ErrorEventMessage()
+                    {
+                        ErrorCode = -1,
+                        ErrorMessage = "가입된 채널이 없습니다."
+                    });
+                    return;
+                };
+
+                log.Info("Received JoinGroup message: {0}", message);
+                await OnJoinGroup(message);
             });
 
             Receive<JoinChannel>(message => {
@@ -101,6 +130,7 @@ namespace ChatCoreAPI.Actors
                     Self.Tell(result);
                 }
             });
+
 
             //LeaveChannel
             Receive<LeaveChannel>(message => {
@@ -170,8 +200,24 @@ namespace ChatCoreAPI.Actors
                 ChannelName = channelInfo.ChannelName,
                 EventData = String.Empty
             });
+        }
+
+        public async Task OnJoinGroup(JoinGroup joinGroup)
+        {            
+            await JoinGroup($"{joinGroup.ChannelId}-{joinGroup.SubGorup}");
+
+            await SendToSelfConnection(new WSSendEvent()
+            {
+                EventType = "OnJoinGroup",
+                ChannelId = joinGroup.ChannelId,
+                EventData = joinGroup.SubGorup,
+                ChannelName = ""
+            });
 
         }
+
+        //JoinGroup
+
 
         public async Task SendToSelfConnection(WSSendEvent wSSendEvent)
         {
@@ -205,6 +251,20 @@ namespace ChatCoreAPI.Actors
                 var wsHub = scope.ServiceProvider.GetRequiredService<IHubContext<ChatHub>>();
 
                 await wsHub.Clients.Group(ChannelId).SendAsync("ReceiveMessage",
+                    wSSendEvent.EventType, wSSendEvent.ChannelId, wSSendEvent.ChannelName, wSSendEvent.EventData);
+            }
+        }
+
+        public async Task SendToSubGroup(string subGroup, WSSendEvent wSSendEvent)
+        {
+            if (!IsJoinGroup)
+                return;
+
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                var wsHub = scope.ServiceProvider.GetRequiredService<IHubContext<ChatHub>>();
+
+                await wsHub.Clients.Group(ChannelId +"-"+ subGroup).SendAsync("ReceiveMessage",
                     wSSendEvent.EventType, wSSendEvent.ChannelId, wSSendEvent.ChannelName, wSSendEvent.EventData);
             }
         }

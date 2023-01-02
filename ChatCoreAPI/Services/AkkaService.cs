@@ -11,15 +11,19 @@ namespace ChatCoreAPI.Services
         private ActorSystem _actorSystem;
         private readonly IConfiguration _configuration;
         private readonly IServiceProvider _serviceProvider;
+        private readonly IServiceScopeFactory _scopeFactory;
+
+        
         private IActorRef _actorRef;
 
         private readonly IHostApplicationLifetime _applicationLifetime;
 
-        public AkkaService(IServiceProvider serviceProvider, IHostApplicationLifetime appLifetime, IConfiguration configuration)
+        public AkkaService(IServiceScopeFactory scopeFactory, IServiceProvider serviceProvider, IHostApplicationLifetime appLifetime, IConfiguration configuration)
         {
             _serviceProvider = serviceProvider;
             _applicationLifetime = appLifetime;
             _configuration = configuration;
+            _scopeFactory = scopeFactory;
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
@@ -35,7 +39,7 @@ namespace ChatCoreAPI.Services
             // start ActorSystem
             _actorSystem = ActorSystem.Create("akka-universe", actorSystemSetup);
 
-            _actorRef = _actorSystem.ActorOf(ChannelManagerActor.Prop(), "ChannelManagerActor");
+            _actorRef = _actorSystem.ActorOf(ChannelManagerActor.Prop(_scopeFactory), "ChannelManagerActor");
 
             ActorTest();
 

@@ -1,9 +1,11 @@
-﻿using System.Threading.Channels;
-
+﻿
 using Akka.Actor;
 using Akka.Event;
 
 using ChatCoreAPI.Actors.Models;
+using ChatCoreAPI.Hubs;
+
+using Microsoft.AspNetCore.SignalR;
 
 using RoundRobin;
 
@@ -21,12 +23,17 @@ namespace ChatCoreAPI.Actors
 
         private RoundRobinList<IActorRef> Router;
 
+        private readonly IServiceScopeFactory _scopeFactory;
+
         int curIdx = 0;
 
-        public ChannelActor(CreateChannel channelInfo)
+        public ChannelActor(CreateChannel channelInfo, IServiceScopeFactory scopeFactory)
         {
             log.Info("Create ChannelActor: {0}", channelInfo.ChannelName);
+            
             ChannelInfo = channelInfo;
+
+            _scopeFactory = scopeFactory;
 
             Router = new RoundRobinList<IActorRef>(ActorRefs);
 
@@ -51,11 +58,15 @@ namespace ChatCoreAPI.Actors
                 }
             });            
 
-            Receive<SendAllGroup>(message => {
-                log.Info("Received String message: {0}", message);
-                foreach (var userActor in ActorRefs)
+            ReceiveAsync<SendAllGroup>(async message => {
+                log.Info("Received SendAllGroup message: {0}", message);
+                if (!string.IsNullOrEmpty(message.SubGroup))
                 {
-                    userActor.Tell(message);
+                    await SendToSubGroup(message.ChannelId, message.SubGroup, message);
+                }
+                else
+                {
+                    await SendToGroup(message.ChannelId, message);
                 }
             });
 
@@ -89,9 +100,31 @@ namespace ChatCoreAPI.Actors
 
         }
 
-        public static Props Prop(CreateChannel channelInfo)
+        public async Task SendToGroup(string ChannelId, WSSendEvent wSSendEvent)
         {
-            return Akka.Actor.Props.Create(() => new ChannelActor(channelInfo));
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                var wsHub = scope.ServiceProvider.GetRequiredService<IHubContext<ChatHub>>();
+
+                await wsHub.Clients.Group(ChannelId).SendAsync("ReceiveMessage",
+                    wSSendEvent.EventType, wSSendEvent.ChannelId, wSSendEvent.ChannelName, wSSendEvent.EventData);
+            }
+        }
+
+        public async Task SendToSubGroup(string ChannelId, string subGroup, WSSendEvent wSSendEvent)
+        {            
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                var wsHub = scope.ServiceProvider.GetRequiredService<IHubContext<ChatHub>>();
+
+                await wsHub.Clients.Group(ChannelId + "-" + subGroup).SendAsync("ReceiveMessage",
+                    wSSendEvent.EventType, wSSendEvent.ChannelId, wSSendEvent.ChannelName, wSSendEvent.EventData);
+            }
+        }
+
+        public static Props Prop(CreateChannel channelInfo, IServiceScopeFactory scopeFactory)
+        {
+            return Akka.Actor.Props.Create(() => new ChannelActor(channelInfo, scopeFactory));
         }
 
         public IActorRef NextActor()

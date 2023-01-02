@@ -71,6 +71,11 @@ namespace ChatCoreAPI.Actors
         public string LoginId { get; set; }
     }
 
+    public class JoinGroup : JoinChannel
+    {
+        public string SubGorup { get; set; }
+    }
+
 
     public class NotyJoinChannel : JoinChannel
     {        
