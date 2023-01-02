@@ -1,6 +1,7 @@
 ﻿# ChatCore API ( SignalR with Akka.net)
 
 웹소켓(Signalr)이 액터와 연동되어 세션단위 채널관리가 되며 API를 통해 채널 푸시기능을 지원합니다.
+도메인에대한 기능은 가지고 있지않으며, 다음 기능을 커스텀하게 구현할수 있습니다.
 
 - 다중채널지원 채팅솔루션
 - 다중채널지원 푸시 시스템
@@ -74,7 +75,33 @@ curl -X 'POST' \
 }'
 ```
 
+#### 특정그룹
 
+```
+curl -X 'POST' \
+  'http://localhost:9595/Channel/SendToChannelAllUser' \
+  -H 'accept: text/plain' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "eventType": "test",
+  "channelId": "test1",
+  "channelName": "테스트1",
+  "eventData": "test data",
+  "subGroup": "testgroup1"
+}'
+```
+
+#### 특정그룹에 라운로로빈 메시지
+```
+curl -X 'POST' \
+  'http://localhost:9595/Channel/AutoAsign' \
+  -H 'accept: text/plain' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "channelId": "webnori",
+  "asignData": "metadata"
+}'
+```
 
 
 
