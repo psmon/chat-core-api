@@ -29,14 +29,14 @@ namespace ChatCoreAPI.Hubs
             await Clients.All.SendAsync("ReceiveMessage", user, message);
         }
 
-        public async Task JoinChannel(string channelId, string loginId, string accessToken) 
+        public async Task JoinChannel(string channelId, string accessToken, string data) 
         {
             JoinChannel joinChannel = new JoinChannel()
             {
                 ConnectionId = Context.ConnectionId,
                 ChannelId = channelId,
                 AccessToken = accessToken,
-                LoginId = loginId,
+                LoginId = accessToken,
                 ChannelManagerActor = _actorBridge.GetActorManager()                
             };
 
@@ -44,7 +44,7 @@ namespace ChatCoreAPI.Hubs
             _userActor.Tell(joinChannel);
         }
 
-        public async Task LeaveChannel(string channelId, string loginId, string accessToken)
+        public async Task LeaveChannel(string channelId, string accessToken, string data)
         {
             LeaveChannel leaveChannel = new LeaveChannel()
             {

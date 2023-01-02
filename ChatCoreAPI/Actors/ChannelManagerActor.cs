@@ -1,8 +1,7 @@
 ﻿using Akka.Actor;
-using Akka.Actor.Dsl;
 using Akka.Event;
 
-using ChatCoreAPI.Actors.Models;
+using ChatCoreAPI.Controllers.Models;
 
 namespace ChatCoreAPI.Actors
 {
@@ -10,12 +9,14 @@ namespace ChatCoreAPI.Actors
     {
         private readonly ILoggingAdapter log = Context.GetLogger();
 
+        private Dictionary<string,ChannelInfo> channels = new Dictionary<string,ChannelInfo>();
+
         public ChannelManagerActor()
         {
             Receive<string>(message => {
                 log.Info("Received String message: {0}", message);
                 Sender.Tell(message);
-            });
+            });            
 
             Receive<CreateChannel>(message => {
                 try
@@ -23,6 +24,7 @@ namespace ChatCoreAPI.Actors
                     log.Info("Received CreateChannel message: {0}", message);
                     Context.ActorOf(ChannelActor.Prop(message), message.ChannelId);
                     Sender.Tell("ok");
+                    channels[message.ChannelId] = message as ChannelInfo;
                 }
                 catch (Exception ex)
                 {
@@ -31,7 +33,8 @@ namespace ChatCoreAPI.Actors
                         ErrorCode = -1,
                         ErrorMessage = $"{message.ChannelId} 채널생성실패 - {ex.Message}"
                     });
-                }
+                }                
+
             });
 
             Receive<DeleteChannel>(message => {
@@ -41,6 +44,7 @@ namespace ChatCoreAPI.Actors
                     var channelActor = Context.ActorSelection(message.ChannelId).ResolveOne(TimeSpan.FromSeconds(1)).Result;
                     channelActor.Tell(PoisonPill.Instance);
                     Sender.Tell("ok");
+                    channels.Remove(message.ChannelId);
                 }
                 catch (Exception ex)
                 {
@@ -77,6 +81,23 @@ namespace ChatCoreAPI.Actors
                         ErrorMessage = $"{message.ChannelId} 채널을 찾을수 없습니다."                        
                     });
                 }
+            });
+
+            Receive<PrintChannelInfo>(message => {
+                log.Info("Received PrintChannelInfo message: {0}", message);
+
+                ChannelInfos channelInfos = new ChannelInfos();
+                channelInfos.channelInfos = new List<Controllers.Models.ChannelInfo>();
+
+                foreach (var channerlInfo in channels.Values)
+                {
+                    channelInfos.channelInfos.Add(new Controllers.Models.ChannelInfo()
+                    {
+                        ChannelId = channerlInfo.ChannelId,
+                        ChannelName =  channerlInfo.ChannelName,
+                    });
+                }
+                Sender.Tell(channelInfos);
             });
 
         }

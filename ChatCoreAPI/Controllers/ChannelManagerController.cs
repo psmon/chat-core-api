@@ -1,6 +1,9 @@
 ﻿using ChatCoreAPI.Actors;
+using ChatCoreAPI.Controllers.Models;
 
 using Microsoft.AspNetCore.Mvc;
+
+using ChannelInfo = ChatCoreAPI.Actors.ChannelInfo;
 
 namespace ChatCoreAPI.Controllers
 {
@@ -17,6 +20,13 @@ namespace ChatCoreAPI.Controllers
             _channelManagerActor = actorBridge;
 
             _serviceScopeFactory = serviceScopeFactory;
+        }
+
+        [HttpGet]
+        public async Task<ChannelInfos> GetChannelInfo()
+        {            
+            var channelInfos = await _channelManagerActor.Ask<object>(new PrintChannelInfo());
+            return channelInfos as ChannelInfos;
         }
 
         [HttpPost]

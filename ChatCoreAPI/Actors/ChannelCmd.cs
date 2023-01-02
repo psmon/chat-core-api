@@ -49,6 +49,11 @@ namespace ChatCoreAPI.Actors
     {
     }
 
+    public class PrintChannelInfo
+    {
+
+    }
+
 
     public class JoinChannel : ChannelCmd
     {
