@@ -1,8 +1,8 @@
-﻿using ChatCoreAPI.Actors;
-using ChatCoreAPI.Actors.Models;
-using Akka.Actor;
+﻿using Akka.Actor;
 
 using ChatCoreAPI.Actors;
+using ChatCoreAPI.Actors.Models;
+
 using Microsoft.AspNetCore.Mvc;
 
 namespace ChatCoreAPI.Controllers
@@ -35,6 +35,19 @@ namespace ChatCoreAPI.Controllers
         {
             string testResult = "";
             _actorBridge.GetChannelActor(sendData.ChannelId).Tell(sendData);
+            return testResult;
+        }
+
+        [HttpPost("AutoAsign")]
+        public async Task<string> AutoAsign(AutoAsign autoAsign)
+        {
+            string testResult = "";
+            _actorBridge.GetChannelActor(autoAsign.ChannelId).Tell(new AutoAsign()
+            {
+                ChannelId = autoAsign.ChannelId,
+                AsignData = autoAsign.AsignData,
+            });
+
             return testResult;
         }
 

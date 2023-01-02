@@ -63,13 +63,13 @@ namespace ChatCoreAPI.Actors
             });
 
 
-            ReceiveAsync<AutoAssign>(async message => {
-                log.Info("Received AutoAssign message: {0}", message.RoomSession);
+            ReceiveAsync<AutoAssignInfo>(async message => {
+                log.Info("Received AutoAssign message: {0}", message.AsignData);
                 await SendToSelfConnection(new WSSendEvent() { 
                     EventType = "AutoAssign",
                     ChannelId = ChannelId,
                     ChannelName = "",
-                    EventData = "test"
+                    EventData = message.AsignData
                 });
             });
 

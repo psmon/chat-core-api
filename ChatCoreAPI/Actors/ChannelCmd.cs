@@ -25,6 +25,13 @@ namespace ChatCoreAPI.Actors
         }
     }
 
+    public class AutoAsign
+    {
+        public string ChannelId { get; set; }
+        public string AsignData {get; set; }
+
+    }
+
     public class ChannelInfo : ChannelCmd
     {
         public string ChannelName { get; set; }
@@ -75,9 +82,9 @@ namespace ChatCoreAPI.Actors
         
     }
 
-    public class AutoAssign : ChannelCmd
+    public class AutoAssignInfo : ChannelCmd
     {
-        public string RoomSession { get; set; }
+        public string AsignData { get; set; }
     }
 
     public class ErrorEventMessage : ChannelCmd

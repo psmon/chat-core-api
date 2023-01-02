@@ -37,10 +37,19 @@ namespace ChatCoreAPI.Actors
                     var nextActor = NextActor();
                     if (nextActor != null)
                     {
-                        nextActor.Tell(new AutoAssign() { RoomSession = Guid.NewGuid().ToString() });
+                        nextActor.Tell(new AutoAssignInfo() { AsignData = Guid.NewGuid().ToString() });
                     }
                 }
             });
+
+            Receive<AutoAsign>(message => {
+                log.Info("Received AutoAsign message: {0}", message);
+                var nextActor = NextActor();
+                if (nextActor != null)
+                {
+                    nextActor.Tell(new AutoAssignInfo() { AsignData = message.AsignData });
+                }
+            });            
 
             Receive<SendAllGroup>(message => {
                 log.Info("Received String message: {0}", message);
