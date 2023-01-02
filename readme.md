@@ -91,7 +91,7 @@ curl -X 'POST' \
 }'
 ```
 
-#### 특정그룹에 라운로로빈 메시지
+#### 특정채널에 라운로로빈 메시지
 ```
 curl -X 'POST' \
   'http://localhost:9595/Channel/AutoAsign' \
