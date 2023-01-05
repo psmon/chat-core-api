@@ -1,6 +1,7 @@
 ﻿
 using Akka.Actor;
 using Akka.Event;
+using Akka.Routing;
 
 using ChatCoreAPI.Actors.Models;
 using ChatCoreAPI.Hubs;
@@ -23,6 +24,8 @@ namespace ChatCoreAPI.Actors
 
         private RoundRobinList<IActorRef> Router;
 
+        private IActorRef RouterGroup;
+
         private readonly IServiceScopeFactory _scopeFactory;
 
         int curIdx = 0;
@@ -36,6 +39,8 @@ namespace ChatCoreAPI.Actors
             _scopeFactory = scopeFactory;
 
             Router = new RoundRobinList<IActorRef>(ActorRefs);
+
+            RouterUpdate(true);
 
             Receive<string>(message => {
                 log.Info("Received String message: {0}", message);
@@ -51,11 +56,16 @@ namespace ChatCoreAPI.Actors
 
             Receive<AutoAsign>(message => {
                 log.Info("Received AutoAsign message: {0}", message);
-                var nextActor = NextActor();
-                if (nextActor != null)
-                {
-                    nextActor.Tell(new AutoAssignInfo() { AsignData = message.AsignData });
-                }
+                
+                // using AkkaRouter
+                RouterGroup.Tell(new AutoAssignInfo() { AsignData = message.AsignData });
+
+                // using Roudbin
+                //var nextActor = NextActor();
+                //if (nextActor != null)
+                //{
+                //   nextActor.Tell(new AutoAssignInfo() { AsignData = message.AsignData });
+                //}
             });            
 
             ReceiveAsync<SendAllGroup>(async message => {
@@ -86,6 +96,8 @@ namespace ChatCoreAPI.Actors
                     ActorsByConncteID[message.ConnectionId] = Sender;
                     Router = new RoundRobinList<IActorRef>(ActorRefs);
 
+                    RouterUpdate(false);
+
                 }
                 else
                 {
@@ -97,7 +109,10 @@ namespace ChatCoreAPI.Actors
                 log.Info("Received LeaveChannel message: {0} {1}", message.ChannelId, message.ConnectionId);
                 ActorRefs.Remove(Sender);
                 ActorsByConncteID.Remove(message.ConnectionId);
+                
                 Router = new RoundRobinList<IActorRef>(ActorRefs);
+                RouterUpdate(false);
+
 
                 Sender.Tell("Ok-LeaveChannel");
 
@@ -126,6 +141,16 @@ namespace ChatCoreAPI.Actors
                     wSSendEvent.EventType, wSSendEvent.ChannelId, wSSendEvent.ChannelName, wSSendEvent.EventData);
             }
         }
+
+        public void RouterUpdate(bool isfirst)
+        {
+            if (!isfirst)
+            {                
+                RouterGroup.Tell(PoisonPill.Instance);
+            }            
+            RouterGroup = Context.ActorOf(Props.Empty.WithRouter(new RoundRobinGroup(ActorRefs)));
+        }
+
 
         public static Props Prop(CreateChannel channelInfo, IServiceScopeFactory scopeFactory)
         {
