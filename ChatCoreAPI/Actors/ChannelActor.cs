@@ -70,9 +70,11 @@ namespace ChatCoreAPI.Actors
                 }
             });
 
-            Receive<SendSomeOne>(message => {
+            Receive<SendSomeOne>(async message => {
                 log.Info("Received String message: {0}", message);
-                ActorRefs[0].Tell(message);
+                IActorRef _userActor;
+                bool isGet = ActorsByConncteID.TryGetValue(message.ChannelId, out _userActor);
+                if (isGet) _userActor.Tell(message);
             });
 
             Receive<JoinChannel>(message => {

@@ -205,7 +205,7 @@ curl -X 'POST' \
                 testProbes[i].ExpectMsg<ChannelInfo>(TimeSpan.FromSeconds(1));
             }
 
-            //99개의 일을 배분
+            //99개의 일을 특정채널에 라운드로빈 배분
             for (int i = 0; i < 99; i++)
             {
                 string taskName = "i" + i;
