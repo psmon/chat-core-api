@@ -100,12 +100,11 @@ namespace ChatCoreAPI.Actors
 
     }
 
-    public class TestActor
+    public class TestActorInfo
     {
-        public IActorRef actorRef { get; set; } 
+        public IActorRef mockActor { get; set; }
 
-        public IActorRef target { get; set; }
+        public IActorRef targetActor { get; set; }
     }
-        
 
 }

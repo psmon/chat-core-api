@@ -6,6 +6,8 @@ using ChatCoreAPI.Actors;
 
 using Microsoft.AspNetCore.Mvc;
 
+using Newtonsoft.Json.Linq;
+
 namespace ChatCoreAPI.Controllers
 {
     [ApiController]
@@ -38,5 +40,16 @@ namespace ChatCoreAPI.Controllers
             _actorBridge.GetActorSystem().ActorOf(UserActor.Prop(connectionId, _serviceScopeFactory));
             return testResult;
         }
+
+        [HttpPost("LineHook")]
+        public async Task<string> HookLine(dynamic param)
+        {
+            //dynamic data = JObject.Parse(param);
+
+            
+
+            return "OK";
+        }
+
     }
 }

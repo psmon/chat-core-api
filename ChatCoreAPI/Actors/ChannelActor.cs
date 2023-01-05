@@ -96,6 +96,9 @@ namespace ChatCoreAPI.Actors
                 ActorRefs.Remove(Sender);
                 ActorsByConncteID.Remove(message.ConnectionId);
                 Router = new RoundRobinList<IActorRef>(ActorRefs);
+
+                Sender.Tell("Ok-LeaveChannel");
+
             });
 
         }

@@ -13,8 +13,7 @@ namespace ChatCoreAPI.Actors
 
         private readonly IServiceScopeFactory _scopeFactory;
 
-        IActorRef target = null;
-
+        private IActorRef _target { get; set; }
 
         public ChannelManagerActor(IServiceScopeFactory scopeFactory)
         {
@@ -25,8 +24,8 @@ namespace ChatCoreAPI.Actors
                 Sender.Tell(message);
             });
 
-            Receive<IActorRef>(actorRef => {
-                target = actorRef;
+            Receive<TestActorInfo>(message => {
+                _target = message.targetActor;
                 Sender.Tell("done");
             });
 
@@ -35,12 +34,11 @@ namespace ChatCoreAPI.Actors
                 {
                     log.Info("Received CreateChannel message: {0}", message);
                     Context.ActorOf(ChannelActor.Prop(message, _scopeFactory), message.ChannelId);
-                    Sender.Tell("ok");
+                    Sender.Tell("ok-CreateChannel");
                     channels[message.ChannelId] = message as ChannelInfo;
 
-                    if (target != null)
-                        target.Forward("ok");
-
+                    if(_target != null)
+                        _target.Forward("ok-CreateChannel");
                 }
                 catch (Exception ex)
                 {
@@ -59,8 +57,12 @@ namespace ChatCoreAPI.Actors
                     log.Info("Received DeleteChannel message: {0}", message);
                     var channelActor = Context.ActorSelection(message.ChannelId).ResolveOne(TimeSpan.FromSeconds(1)).Result;
                     channelActor.Tell(PoisonPill.Instance);
-                    Sender.Tell("ok");
+                    Sender.Tell("ok-DeleteChannel");
                     channels.Remove(message.ChannelId);
+
+                    if (_target != null)
+                        _target.Forward("ok-DeleteChannel");
+
                 }
                 catch (Exception ex)
                 {

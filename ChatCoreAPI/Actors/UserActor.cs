@@ -22,9 +22,9 @@ namespace ChatCoreAPI.Actors
 
         public bool IsJoinGroup { get; set; }
 
-        private IActorRef _testActor { get; set; }
+        private IActorRef _target { get; set; }
 
-        IActorRef target = null;
+        private IActorRef _wsTest { get; set; }
 
         public UserActor(string connectionId, IServiceScopeFactory scopeFactory)
         {
@@ -36,13 +36,24 @@ namespace ChatCoreAPI.Actors
 
             Receive<string>(message => {
                 log.Info("Received String message: {0}", message);
+
+                if (message == "Ok-LeaveChannel")
+                {
+                    IsJoinGroup = false;
+                    ChannelId = "";
+                }
+
                 Sender.Tell(message);
+
+                if (_target != null)
+                    _target.Forward(message);
+
             });
 
-            Receive<TestActor>(message => {
-                log.Info("Received TestActor message: {0}", message);
-                _testActor = message.actorRef;
-                target = message.target;
+            Receive<TestActorInfo>(message => {
+                _target = message.targetActor;
+                _wsTest = message.mockActor;
+                Sender.Tell("done");
             });
 
             ReceiveAsync<SendAllGroup>(async message => {
@@ -95,6 +106,10 @@ namespace ChatCoreAPI.Actors
                     ChannelName = "",
                     EventData = message.AsignData
                 });
+
+                if (_target != null)
+                    _target.Forward(message);
+
             });
 
             ReceiveAsync<JoinGroup>(async message => {
@@ -133,8 +148,8 @@ namespace ChatCoreAPI.Actors
                 {
                     ChannelInfo channelInfo = result as ChannelInfo;
                     _channelActor = channelInfo.ChannelActor;
-                    _channelActor.Tell(message);
 
+                    _channelActor.Tell(message);
                 } 
                 else if (result is ErrorEventMessage) {
                     Self.Tell(result);
@@ -177,17 +192,20 @@ namespace ChatCoreAPI.Actors
 
             Receive<ChannelInfo>(async message => {
                 log.Info("Received ChannelInfo message: {0}", message);
-
-                if (target != null)
-                    target.Forward(message);
-
                 await OnJoinChannel(message);
+
+                if (_target != null)
+                    _target.Forward(message);
 
             });
 
             Receive<ErrorEventMessage>(async message => {
                 log.Error($"Received ErrorEvent message: {message.ErrorCode} {message.ErrorMessage}");
                 await OnErrorMessage(message);
+
+                if (_target != null)
+                    _target.Forward(message);
+
             });
 
 
@@ -236,9 +254,9 @@ namespace ChatCoreAPI.Actors
 
         public async Task SendToSelfConnection(WSSendEvent wSSendEvent)
         {
-            if (_testActor != null)
+            if (_wsTest != null)
             {
-                _testActor.Tell(wSSendEvent);
+                _wsTest.Tell(wSSendEvent);
                 return;
             }
 
@@ -253,9 +271,9 @@ namespace ChatCoreAPI.Actors
 
         public async Task SendToConnectionId(string connectionId, WSSendEvent wSSendEvent)
         {
-            if (_testActor != null)
+            if (_wsTest != null)
             {
-                _testActor.Tell(wSSendEvent);
+                _wsTest.Tell(wSSendEvent);
                 return;
             }
 
@@ -270,14 +288,14 @@ namespace ChatCoreAPI.Actors
 
         public async Task SendToGroup(WSSendEvent wSSendEvent)
         {
-            if (!IsJoinGroup)
-                return;
-
-            if (_testActor != null)
+            if (_wsTest != null)
             {
-                _testActor.Tell(wSSendEvent);
+                _wsTest.Tell(wSSendEvent);
                 return;
             }
+
+            if (!IsJoinGroup)
+                return;
 
             using (var scope = _scopeFactory.CreateScope())
             {
@@ -290,14 +308,14 @@ namespace ChatCoreAPI.Actors
 
         public async Task SendToSubGroup(string subGroup, WSSendEvent wSSendEvent)
         {
-            if (!IsJoinGroup)
-                return;
-
-            if (_testActor != null)
+            if (_wsTest != null)
             {
-                _testActor.Tell(wSSendEvent);
+                _wsTest.Tell(wSSendEvent);
                 return;
             }
+
+            if (!IsJoinGroup)
+                return;
 
             using (var scope = _scopeFactory.CreateScope())
             {
@@ -310,9 +328,9 @@ namespace ChatCoreAPI.Actors
 
         public async Task JoinGroup(string groupName)
         {
-            if (_testActor != null)
+            if (_wsTest != null)
             {
-                _testActor.Tell(new JoinGroup() { ConnectionId = ConnectionId, SubGorup = groupName });
+                _wsTest.Tell("AddToGroupAsync:" + groupName);
                 return;
             }
 
@@ -325,9 +343,9 @@ namespace ChatCoreAPI.Actors
 
         public async Task OnErrorMessage(ErrorEventMessage errorEvent)
         {
-            if (_testActor != null)
+            if (_wsTest != null)
             {
-                _testActor.Tell(errorEvent);
+                _wsTest.Tell(errorEvent);
                 return;
             }
 
