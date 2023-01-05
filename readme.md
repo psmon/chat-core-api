@@ -110,28 +110,54 @@ curl -X 'POST' \
 메시징처리에대한 유닛테스트를 지원합니다.
 
 ```
-    public class ChannelTest : TestKit
+    public class ChannelTest : TestKitXunit
     {
         IActorRef userActor;
-        TestProbe userActorTarget;
+
+        IActorRef channelActor;
+
         IActorRef channelManagerActor;
+
         IActorRef websocket;
-        TestProbe channelManagerActorTarget;
 
+        TestProbe userActorProbe;
 
-        public ChannelTest()
+        TestProbe channelManagerActorProbe;
+
+        public ChannelTest(ITestOutputHelper output) : base(output)
         {
-            channelManagerActor = this.Sys.ActorOf(ChannelManagerActor.Prop(null));
-            channelManagerActorTarget = this.CreateTestProbe();
-            channelManagerActor.Tell(channelManagerActorTarget.Ref, this.TestActor);
+            Setup();
+        }
 
-
-            userActor = this.Sys.ActorOf(UserActor.Prop("test1", null));            
+        public void Setup()
+        {
+            userActor = this.Sys.ActorOf(UserActor.Prop("test1", null));
             websocket = this.Sys.ActorOf<WebSocketMockActor>();
 
-            userActorTarget = this.CreateTestProbe();
-            userActor.Tell(new ChatCoreAPI.Actors.TestActor() { actorRef = websocket, target = userActorTarget.Ref }, this.TestActor);
+            userActorProbe = this.CreateTestProbe();
+            channelManagerActorProbe = this.CreateTestProbe();
+
+
+            channelManagerActor = this.Sys.ActorOf(ChannelManagerActor.Prop(null));
+            
+            channelManagerActor.Tell(new TestActorInfo() { targetActor = channelManagerActorProbe.Ref }, this.TestActor);
             ExpectMsg("done", TimeSpan.FromSeconds(1));
+            
+            userActor.Tell(new TestActorInfo() { mockActor = websocket, targetActor = userActorProbe.Ref }, this.TestActor);
+            ExpectMsg("done", TimeSpan.FromSeconds(1));
+
+            channelManagerActor.Tell(new CreateChannel() { ChannelId = "webnori", ChannelName = "웹노리" });
+            channelManagerActorProbe.ExpectMsg("ok-CreateChannel", TimeSpan.FromSeconds(1));
+
+            var result = channelManagerActor.Ask(new ChannelInfo()
+            {
+                ChannelId = "webnori"
+            }).Result;
+
+            if (result is ChannelInfo)
+            {
+                channelActor = (result as ChannelInfo).ChannelActor;
+            }
 
         }
 
@@ -148,6 +174,52 @@ curl -X 'POST' \
             });
 
             userActorTarget.ExpectMsg<ChannelInfo>(TimeSpan.FromSeconds(1));
+        }
+
+        [Fact]
+        public void RoundRobinTest() 
+        {            
+
+            TestProbe[] testProbes = new []{ this.CreateTestProbe(), this.CreateTestProbe(), this.CreateTestProbe() };
+
+            //Given : 3명의 상담원생성
+            for (int i = 0; i < 3; i++)
+            {
+                string userId = "test" + i;
+                var _userActor = this.Sys.ActorOf(UserActor.Prop(userId, null));
+                _userActor.Tell(new TestActorInfo() { mockActor = websocket, targetActor = testProbes[i].Ref }, this.TestActor);
+
+
+                //When : 채널에 조인
+                _userActor.Tell(new JoinChannel()
+                {
+                    ConnectionId = userId,
+                    ChannelId = "webnori",
+                    ChannelManagerActor = channelManagerActor
+                });                
+            }
+
+            //채널에 가입완료 체크
+            for (int i = 0; i < 3; i++)
+            {
+                testProbes[i].ExpectMsg<ChannelInfo>(TimeSpan.FromSeconds(1));
+            }
+
+            //99개의 일을 배분
+            for (int i = 0; i < 99; i++)
+            {
+                string taskName = "i" + i;
+                channelActor.Tell(new AutoAsign() { AsignData=taskName,ChannelId="webnori" });
+            }
+
+            //작업균등 분배되었는지 확인
+            for (int i = 0; i < 33; i++) 
+            {
+                testProbes[0].ExpectMsg<AutoAssignInfo>(TimeSpan.FromSeconds(1));
+                testProbes[1].ExpectMsg<AutoAssignInfo>(TimeSpan.FromSeconds(1));
+                testProbes[2].ExpectMsg<AutoAssignInfo>(TimeSpan.FromSeconds(1));
+            }
+
         }
     }
 ```
