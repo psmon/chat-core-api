@@ -105,8 +105,18 @@ curl -X 'POST' \
 ```
 
 
-
-
 ## CodeReview
 
 [코드리뷰](code-review.md)
+
+## 도움되는링크
+- https://petabridge.com/blog/intro-akka-hosting/  - Akka.NET Webapplication에서 Akka탑재및 상호연동을 조금더 유연하게 할수 있습니다.
+- https://petabridge.com/cluster/lesson1.html - 분산처리 메시징이 필요할시, Actor를 클러스터로 구성할수 있습니다.
+- https://dev.classmethod.jp/articles/for-beginner-load-balancer-explanation/ -Akka는 서버기반의 분산처리 시스템이며, 웹소켓의 분산은 로드밸런스를 이해해야합니다.
+
+
+
+
+
+
+

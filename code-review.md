@@ -290,7 +290,3 @@ public class ChatHub : Hub
 ```
 - 푸시처리를 위해 웹소켓을 항상이용할 필요없이 RESTAPI를 활용하여 Server-Client(web) 푸시메시지 전송이 가능합니다.
 
-
-# 응용편
-- https://getakka.net/articles/remoting/deployment.html : 로컬에서 작성한 액터는 리모트에도 큰 코드변경없이 배치가 가능하기때문에 리모트로 구성되어 다중처리가 가능합니다.
-- https://getakka.net/articles/clustering/cluster-routing.html : 대용량 분산 처리가 필요할시 특정액터(채널액터)를 클러스터화 할수 있습니다.
